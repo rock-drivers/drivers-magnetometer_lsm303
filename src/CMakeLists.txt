@@ -1,7 +1,8 @@
 rock_library(magnetometer_lsm303
-    SOURCES Dummy.cpp
-    HEADERS Dummy.hpp)
+    SOURCES lsm303.cpp
+    HEADERS lsm303.hpp 
+    DEPS_PKGCONFIG iodrivers_base)
 
-rock_executable(magnetometer_lsm303_bin Main.cpp
+rock_executable(lsm303_main main.cpp
     DEPS magnetometer_lsm303)
 
