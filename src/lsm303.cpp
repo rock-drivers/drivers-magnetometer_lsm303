@@ -3,9 +3,13 @@
 #include <string.h>
 #include <boost/crc.hpp>
 
+#define MAG_RESOLUTION 0.08   // mgauss/LSB according to LSM303D data sheet 
+#define ACC_RESOLUTION 0.061  // mg/LSB according to LSM303D data sheet
+
 using namespace magnetometer_lsm303;
 
 Driver::Driver() : iodrivers_base::Driver(10000),
+                   dev_no(255),
                    ax(0),
                    ay(0),
                    az(0),
@@ -13,7 +17,6 @@ Driver::Driver() : iodrivers_base::Driver(10000),
                    my(0),
                    mz(0)
 {
-  foo = 3;
 }
 
 void Driver::open(std::string const& uri){
@@ -28,14 +31,14 @@ void Driver::read(){
 
 void Driver::parsePacket(uint8_t const* buffer, size_t size){
 //  uint8_t start = buffer[0];
-  foo = 7;
-  ax = (int16_t) buffer[2] << 8 | buffer [1];
-  ay = (int16_t) buffer[4] << 8 | buffer [3];
-  az = (int16_t) buffer[6] << 8 | buffer [5];
-  mx = (int16_t) buffer[8] << 8 | buffer [7];
-  my = (int16_t) buffer[10] << 8 | buffer [9];
-  mz = (int16_t) buffer[12] << 8 | buffer [11];
-  printf("parsed ACC(%+05i|%+05i|%+05i) MAG(%+05i|%+05i|%+05i)\n",ax, ay, az, mx, my, mz);
+  dev_no = buffer[1];
+  ax = (int16_t) buffer[3] << 8 | buffer [2];
+  ay = (int16_t) buffer[5] << 8 | buffer [4];
+  az = (int16_t) buffer[7] << 8 | buffer [6];
+  mx = (int16_t) buffer[9] << 8 | buffer [8];
+  my = (int16_t) buffer[11] << 8 | buffer [10];
+  mz = (int16_t) buffer[13] << 8 | buffer [12];
+ // printf("Device No. %i: ACC(%+05i|%+05i|%+05i) MAG(%+05i|%+05i|%+05i)\n",dev_no,ax, ay, az, mx, my, mz);
 }
 
 int Driver::extractPacket(uint8_t const* buffer, size_t size) const {
@@ -46,27 +49,56 @@ int Driver::extractPacket(uint8_t const* buffer, size_t size) const {
   start = (uint8_t*) memchr(buffer,'*',size);
 
   if(start == NULL){
-    printf("Start char not found\n");
+    //printf("Start char not found\n");
     return -size; // not start char
   }
   else if(buffer - start != 0){
-    printf("Start char found at pos %i, but not at first byte\n",(int) (buffer-start));
+    //printf("Start char found at pos %i, but not at first byte\n",(int) (buffer-start));
     return (int) (buffer-start); //start char, but not at first byte   
   }
-  else if(start == 0 && size < 15){
-    printf("Start char at 0, but not complete yet\n");
+  else if(start == 0 && size < 16){
+    //printf("Start char at 0, but not complete yet\n");
     return 0; //start char at [0] but not complete
   }
   else { // we have a full packet
     //check crc
-    boost::crc_ccitt_type result;
-    result.process_bytes(buffer,size);
-    printf("WE have a full package, crc: %X\n",(uint16_t) result.checksum());
-    if(result.checksum() == 0){ //crc ok
-      return 15;
+    boost::crc_ccitt_type ccitt;
+    ccitt.process_bytes(buffer,14);
+    if(ccitt.checksum() == *(uint16_t*)(&buffer[14])){ //crc ok
+      return 16;
     }
     else return -size;
   }
-  return 0;
+  return -size;
 }
 
+// returns x component of magnetic field in Tesla
+float Driver::getMagX(void){
+  return mx * MAG_RESOLUTION * 1.0e-7;
+}
+
+// returns y component of magnetic field in Tesla
+float Driver::getMagY(void){
+  return my * MAG_RESOLUTION * 1.0e-7;
+}
+
+// returns z component of magnetic field in Tesla
+float Driver::getMagZ(void){
+  return mz * MAG_RESOLUTION * 1.0e-7;
+}
+
+float Driver::getAccX(void){
+  return ax * ACC_RESOLUTION * 9.80665e-3;
+}
+
+float Driver::getAccY(void){
+  return ay * ACC_RESOLUTION * 9.80665e-3;
+}
+
+float Driver::getAccZ(void){
+  return az * ACC_RESOLUTION * 9.80665e-3;
+}
+
+uint8_t Driver::getDevNo(void){
+  return dev_no;
+}
