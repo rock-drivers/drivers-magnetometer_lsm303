@@ -16,12 +16,13 @@ int main(int argc, char** argv){
     catch(iodrivers_base::TimeoutError){
       cout << "Timeout error" << endl;
     }
-    printf("Dev No %i: ACC(%f|%f|%f) MAG(%f|%f|%f)\n",d->getDevNo(),
+    printf("Dev %1i: ACC(% 6.2f|% 6.2f|% 6.2f) MAG(% 6.2f|% 6.2f|% 6.2f)",d->getDevNo(),
         d->getAccX(),
         d->getAccY(),
         d->getAccZ(),
-        d->getMagX(),
-        d->getMagY(),
-        d->getMagZ());
+        d->getMagX() * 1e6,
+        d->getMagY() * 1e6,
+        d->getMagZ() * 1e6);
+    d->getDevNo() ? printf("\n") : printf("\t");
   }
 }

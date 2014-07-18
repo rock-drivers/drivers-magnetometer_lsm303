@@ -13,15 +13,17 @@ namespace magnetometer_lsm303 {
       void open(std::string const& uri);
       void read();
       int extractPacket(uint8_t const* buffer, size_t size) const;
-      float getMagX(void);
-      float getMagY(void);
-      float getMagZ(void);
-      float getAccX(void);
-      float getAccY(void);
-      float getAccZ(void);
+      double getMagX(void);
+      double getMagY(void);
+      double getMagZ(void);
+      double getAccX(void);
+      double getAccY(void);
+      double getAccZ(void);
       uint8_t getDevNo(void);
     private:
       void parsePacket(uint8_t const *buffer, size_t size);
+      inline static double adc2tesla(int16_t);
+      inline static double adc2meter_per_second_squared(int16_t);
       int16_t ax, ay, az, mx, my, mz;
       uint8_t dev_no;
   };

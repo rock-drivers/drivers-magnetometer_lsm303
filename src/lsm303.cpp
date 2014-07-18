@@ -5,17 +5,18 @@
 
 #define MAG_RESOLUTION 0.08   // mgauss/LSB according to LSM303D data sheet 
 #define ACC_RESOLUTION 0.061  // mg/LSB according to LSM303D data sheet
+#define STANDARD_GRAVITY 9.80665 // standard gravity according to CGPM CR70
 
 using namespace magnetometer_lsm303;
 
 Driver::Driver() : iodrivers_base::Driver(10000),
-                   dev_no(255),
                    ax(0),
                    ay(0),
                    az(0),
                    mx(0),
                    my(0),
-                   mz(0)
+                   mz(0),
+                   dev_no(255)
 {
 }
 
@@ -73,32 +74,40 @@ int Driver::extractPacket(uint8_t const* buffer, size_t size) const {
 }
 
 // returns x component of magnetic field in Tesla
-float Driver::getMagX(void){
-  return mx * MAG_RESOLUTION * 1.0e-7;
+double Driver::getMagX(void){
+  return Driver::adc2tesla(mx);
 }
 
 // returns y component of magnetic field in Tesla
-float Driver::getMagY(void){
-  return my * MAG_RESOLUTION * 1.0e-7;
+double Driver::getMagY(void){
+  return Driver::adc2tesla(my);
 }
 
 // returns z component of magnetic field in Tesla
-float Driver::getMagZ(void){
-  return mz * MAG_RESOLUTION * 1.0e-7;
+double Driver::getMagZ(void){
+  return Driver::adc2tesla(mz);
 }
 
-float Driver::getAccX(void){
-  return ax * ACC_RESOLUTION * 9.80665e-3;
+double Driver::getAccX(void){
+  return Driver::adc2meter_per_second_squared(ax);
 }
 
-float Driver::getAccY(void){
-  return ay * ACC_RESOLUTION * 9.80665e-3;
+double Driver::getAccY(void){
+  return Driver::adc2meter_per_second_squared(ay);
 }
 
-float Driver::getAccZ(void){
-  return az * ACC_RESOLUTION * 9.80665e-3;
+double Driver::getAccZ(void){
+  return Driver::adc2meter_per_second_squared(az);
 }
 
 uint8_t Driver::getDevNo(void){
   return dev_no;
+}
+
+inline double Driver::adc2tesla(int16_t  val){
+  return val * MAG_RESOLUTION * 1.0e-7;
+} 
+
+inline double Driver::adc2meter_per_second_squared(int16_t val){
+  return val * ACC_RESOLUTION * STANDARD_GRAVITY * 1.0e-3;
 }
