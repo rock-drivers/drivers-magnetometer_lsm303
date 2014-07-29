@@ -6,3 +6,8 @@ rock_library(magnetometer_lsm303
 rock_executable(lsm303_main main.cpp
     DEPS magnetometer_lsm303)
 
+rock_executable(lsm303_output_adc main2.cpp
+    DEPS magnetometer_lsm303)
+
+rock_executable(lsm303_readcalib main3.cpp
+    DEPS magnetometer_lsm303)

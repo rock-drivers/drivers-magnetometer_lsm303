@@ -1,0 +1,29 @@
+#include <magnetometer_lsm303/lsm303.hpp>
+#include <iostream>
+#include <stdio.h>
+
+using namespace std;
+
+int main(int argc, char** argv){
+  magnetometer_lsm303::Driver* d = new magnetometer_lsm303::Driver();
+  d->setReadTimeout(base::Time::fromSeconds(2));
+  cout << "Opening serial device" << endl;
+  d->open("serial:///dev/ttyUSB0:57600");
+  while(1){
+    try{
+      d->read();
+    }
+    catch(iodrivers_base::TimeoutError){
+      cout << "Timeout error" << endl;
+    }
+
+    if (d->getDevNo() == atoi(argv[1])) {
+        printf("%i\t%i\t%i\t%i\t%i\t%i\n",d->getRawAccX(),
+        d->getRawAccY(),
+        d->getRawAccZ(),
+        d->getRawMagX(),
+        d->getRawMagY(),
+        d->getRawMagZ());
+    }
+  }
+}
