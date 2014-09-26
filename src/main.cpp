@@ -5,10 +5,15 @@
 using namespace std;
 
 int main(int argc, char** argv){
+  if (argc < 2) {
+    printf("Please specify device, e.g. %s serial:///dev/ttyUSB0:57600\n",argv[0]);
+    return -1;
+  }
+
   magnetometer_lsm303::Driver* d = new magnetometer_lsm303::Driver();
   d->setReadTimeout(base::Time::fromSeconds(20));
   cout << "Opening serial device" << endl;
-  d->open("serial:///dev/ttyUSB0:57600");
+  d->open(argv[1]);
   while(1){
     try{
       d->read();
