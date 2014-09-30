@@ -22,9 +22,10 @@ Driver::Driver() : iodrivers_base::Driver(10000),
                    mx(0),
                    my(0),
                    mz(0),
-                   dev_no(255),
-                   AccCalibrationMatrix(Eigen::Matrix<double,4,3>::Identity())
+                   dev_no(255)
 {
+  //Set scale factor in accelerometer correction matrix to put out m/s^2
+  setAccScale(ACC_RESOLUTION * STANDARD_GRAVITY * 1.0e-3);
 }
 
 void Driver::open(std::string const& uri){
@@ -98,21 +99,6 @@ double Driver::getMagZ(void){
   return Driver::adc2tesla(mz);
 }
 
-/// Returns x component of acceleration in m/s^2
-double Driver::getAccX(void){
-  return Driver::adc2meter_per_second_squared(ax);
-}
-
-/// Returns y component of acceleration in m/s^2
-double Driver::getAccY(void){
-  return Driver::adc2meter_per_second_squared(ay);
-}
-
-/// Returns z component of acceleration in m/s^2
-double Driver::getAccZ(void){
-  return Driver::adc2meter_per_second_squared(az);
-}
-
 /// returns raw x component of magnetic field 
 int16_t Driver::getRawMagX(void){
   return mx;
@@ -143,6 +129,15 @@ int16_t Driver::getRawAccZ(void){
   return az;
 }
 
+/** Function returns correct accelerometer readings using a 4x3 correction matrix.
+  * The matrix incorporates misalignment- , scale and offset-errors as outlined
+  * in ST application note AN3192 */
+Eigen::Vector3d Driver::getAcc(){
+  Eigen::Matrix<double,1,4> x;
+  x << ax, ay, az, 1.0;
+  return  (x * AccCalibrationMatrix).transpose();
+}
+
 /// Returns the number of the device, which sent the data (useful in case of multiple / chained LSM303 on one microcontroller)
 uint8_t Driver::getDevNo(void){
   return dev_no;
@@ -156,13 +151,31 @@ inline double Driver::adc2meter_per_second_squared(int16_t val){
   return val * ACC_RESOLUTION * STANDARD_GRAVITY * 1.0e-3;
 }
 
-/** Function to correct accelerometer readings using a 4x3 correction matrix.
-  * The matrix incorporates misalignment- , scale and offset-errors as outlined
-  * in ST application note AN3192 */
-Eigen::Vector3d Driver::correctAccReading(Eigen::Vector3d acc){
-  Eigen::Matrix<double,1,4> x;
-  x << acc(0), acc(1), acc(2), 1.0;
-  return  (x * AccCalibrationMatrix).transpose();
+void Driver::setAccCalibrationParameters(double acc11, double acc12, double acc13,
+                                         double acc21, double acc22, double acc23,
+                                         double acc31, double acc32, double acc33,
+                                         double acc10, double acc20, double acc30){
+  
+  AccCalibrationMatrix << acc11, acc21, acc31, 
+                          acc12, acc22, acc32,
+                          acc13, acc23, acc33,
+                          acc10, acc20, acc30;
+} 
+void Driver::setAccScale(double x, double y, double z){
+  AccCalibrationMatrix(0,0) = x;
+  AccCalibrationMatrix(1,1) = y;
+  AccCalibrationMatrix(2,2) = z;
+}
+
+void Driver::setAccScale(double s){
+  setAccScale(s,s,s);
+}
+
+/// set accelerometer offset in m/s^2
+void Driver::setAccOffset(double x, double y, double z){
+  AccCalibrationMatrix(3,0) = x;
+  AccCalibrationMatrix(3,1) = y;
+  AccCalibrationMatrix(3,2) = z;
 }
 
 /** Function to read a correction parameter matrix for the accelerometers of the ST LSM303

@@ -18,9 +18,6 @@ namespace magnetometer_lsm303 {
       double getMagX(void);
       double getMagY(void);
       double getMagZ(void);
-      double getAccX(void);
-      double getAccY(void);
-      double getAccZ(void);
       int16_t getRawMagX(void);
       int16_t getRawMagY(void);
       int16_t getRawMagZ(void);
@@ -28,8 +25,16 @@ namespace magnetometer_lsm303 {
       int16_t getRawAccY(void);
       int16_t getRawAccZ(void);
       uint8_t getDevNo(void);
-      Eigen::Vector3d correctAccReading(Eigen::Vector3d acc);
+      Eigen::Vector3d getAcc(void);
       void readAccCalibrationParameters(char* filename);
+      void setAccCalibrationParameters(double acc11, double acc12, double acc13,
+                                       double acc21, double acc22, double acc23,
+                                       double acc31, double acc32, double acc33,
+                                       double acc10, double acc20, double acc30);
+      void setAccScale(double);
+      void setAccScale(double,double,double);
+      void setAccOffset(double,double,double);
+
     private:
       void parsePacket(uint8_t const *buffer, size_t size);
       inline static double adc2tesla(int16_t);
