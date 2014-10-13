@@ -25,6 +25,7 @@ Driver::Driver() : iodrivers_base::Driver(10000),
                    dev_no(255)
 {
   //Set scale factor in accelerometer correction matrix to put out m/s^2
+  AccCalibrationMatrix.setIdentity();
   setAccScale(ACC_RESOLUTION * STANDARD_GRAVITY * 1.0e-3);
 }
 
@@ -147,9 +148,9 @@ inline double Driver::adc2tesla(int16_t  val){
   return val * MAG_RESOLUTION * 1.0e-7;
 } 
 /// Helper function to get m/s^2 units from raw adc accelerometer readings, depending on ACC_RESOLUTION
-inline double Driver::adc2meter_per_second_squared(int16_t val){
-  return val * ACC_RESOLUTION * STANDARD_GRAVITY * 1.0e-3;
-}
+//inline double Driver::adc2meter_per_second_squared(int16_t val){
+//  return val * ACC_RESOLUTION * STANDARD_GRAVITY * 1.0e-3;
+//}
 
 void Driver::setAccCalibrationParameters(double acc11, double acc12, double acc13,
                                          double acc21, double acc22, double acc23,

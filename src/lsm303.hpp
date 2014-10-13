@@ -38,10 +38,10 @@ namespace magnetometer_lsm303 {
     private:
       void parsePacket(uint8_t const *buffer, size_t size);
       inline static double adc2tesla(int16_t);
-      inline static double adc2meter_per_second_squared(int16_t);
+      //inline static double adc2meter_per_second_squared(int16_t);
       int16_t ax, ay, az, mx, my, mz;
       uint8_t dev_no;
-      Eigen::Matrix<double,4,3> AccCalibrationMatrix;
+      Eigen::Matrix<double,4,3,Eigen::DontAlign> AccCalibrationMatrix;
   };
 }
 #endif
