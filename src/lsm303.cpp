@@ -26,7 +26,9 @@ Driver::Driver() : iodrivers_base::Driver(10000),
 {
   //Set scale factor in accelerometer correction matrix to put out m/s^2
   AccCalibrationMatrix.setIdentity();
+  MagCalibrationMatrix.setIdentity();
   setAccScale(ACC_RESOLUTION * STANDARD_GRAVITY * 1.0e-3);
+  setMagScale(MAG_RESOLUTION * 1.0e-7);
 }
 
 void Driver::open(std::string const& uri){
@@ -85,21 +87,6 @@ int Driver::extractPacket(uint8_t const* buffer, size_t size) const {
   return -size;
 }
 
-/// returns x component of magnetic field in Tesla
-double Driver::getMagX(void){
-  return Driver::adc2tesla(mx);
-}
-
-/// returns y component of magnetic field in Tesla
-double Driver::getMagY(void){
-  return Driver::adc2tesla(my);
-}
-
-/// returns z component of magnetic field in Tesla
-double Driver::getMagZ(void){
-  return Driver::adc2tesla(mz);
-}
-
 /// returns raw x component of magnetic field 
 int16_t Driver::getRawMagX(void){
   return mx;
@@ -139,37 +126,46 @@ Eigen::Vector3d Driver::getAcc(){
   return  (x * AccCalibrationMatrix).transpose();
 }
 
+/** Function returns correct magnetometer readings using a 4x3 correction matrix.
+  * The matrix incorporates hardiron and softiron errors as outlined
+  * in ST application note AN3192 */
+Eigen::Vector3d Driver::getMag(){
+  Eigen::Matrix<double,1,4> x;
+  x << mx, my, mz, 1.0;
+  return  (x * MagCalibrationMatrix).transpose();
+}
+
 /// Returns the number of the device, which sent the data (useful in case of multiple / chained LSM303 on one microcontroller)
 uint8_t Driver::getDevNo(void){
   return dev_no;
 }
-/// Helper function to get tesla from adc raw reading depending on MAG_RESOLUTION
-inline double Driver::adc2tesla(int16_t  val){
-  return val * MAG_RESOLUTION * 1.0e-7;
-} 
-/// Helper function to get m/s^2 units from raw adc accelerometer readings, depending on ACC_RESOLUTION
-//inline double Driver::adc2meter_per_second_squared(int16_t val){
-//  return val * ACC_RESOLUTION * STANDARD_GRAVITY * 1.0e-3;
-//}
 
-void Driver::setAccCalibrationParameters(double acc11, double acc12, double acc13,
-                                         double acc21, double acc22, double acc23,
-                                         double acc31, double acc32, double acc33,
-                                         double acc10, double acc20, double acc30){
-  
-  AccCalibrationMatrix << acc11, acc21, acc31, 
-                          acc12, acc22, acc32,
-                          acc13, acc23, acc33,
-                          acc10, acc20, acc30;
-} 
+void Driver::setAccCalibrationMatrix(Eigen::Matrix<double,4,3,Eigen::DontAlign> m){
+  AccCalibrationMatrix = m;
+}
+
+void Driver::setMagCalibrationMatrix(Eigen::Matrix<double,4,3,Eigen::DontAlign> m){
+  MagCalibrationMatrix = m;
+}
+
 void Driver::setAccScale(double x, double y, double z){
   AccCalibrationMatrix(0,0) = x;
   AccCalibrationMatrix(1,1) = y;
   AccCalibrationMatrix(2,2) = z;
 }
 
+void Driver::setMagScale(double x, double y, double z){
+  MagCalibrationMatrix(0,0) = x;
+  MagCalibrationMatrix(1,1) = y;
+  MagCalibrationMatrix(2,2) = z;
+}
+
 void Driver::setAccScale(double s){
   setAccScale(s,s,s);
+}
+
+void Driver::setMagScale(double s){
+  setMagScale(s,s,s);
 }
 
 /// set accelerometer offset in m/s^2
