@@ -35,13 +35,13 @@ Driver::Driver() : iodrivers_base::Driver(10000),
     m(0,0) = acc_scale;
     m(1,1) = acc_scale;
     m(2,2) = acc_scale;
-    AccCalibrationMatrix = new std::vector<CalibrationMatrix>(NDEV,m);
+    AccCalibrationMatrix.assign(NDEV,m);
     
     double mag_scale = MAG_RESOLUTION * 1.0e-7;
     m(0,0) = mag_scale;
     m(1,1) = mag_scale;
     m(2,2) = mag_scale;
-    MagCalibrationMatrix = new std::vector<CalibrationMatrix>(NDEV,m);
+    MagCalibrationMatrix.assign(NDEV,m);
 }
 
 void Driver::open(std::string const& uri){
@@ -136,7 +136,7 @@ int16_t Driver::getRawAccZ(void){
 Eigen::Vector3d Driver::getAcc(){
   Eigen::Matrix<double,1,4> x;
   x << ax, ay, az, 1.0;
-  return  (x * AccCalibrationMatrix->at(dev_no)).transpose();
+  return  (x * AccCalibrationMatrix.at(dev_no)).transpose();
 }
 
 /** Function returns correct magnetometer readings using a 4x3 correction matrix.
@@ -145,7 +145,7 @@ Eigen::Vector3d Driver::getAcc(){
 Eigen::Vector3d Driver::getMag(){
   Eigen::Matrix<double,1,4> x;
   x << mx, my, mz, 1.0;
-  return  (x * MagCalibrationMatrix->at(dev_no)).transpose();
+  return  (x * MagCalibrationMatrix.at(dev_no)).transpose();
 }
 
 /// Returns the number of the device, which sent the data (useful in case of multiple / chained LSM303 on one microcontroller)
@@ -154,23 +154,23 @@ uint8_t Driver::getDevNo(void){
 }
 
 void Driver::setAccCalibrationMatrix(int n,Eigen::Matrix<double,4,3,Eigen::DontAlign> m){
-  AccCalibrationMatrix->at(n) = m;
+  AccCalibrationMatrix.at(n) = m;
 }
 
 void Driver::setMagCalibrationMatrix(int n, Eigen::Matrix<double,4,3,Eigen::DontAlign> m){
-  MagCalibrationMatrix->at(n) = m;
+  MagCalibrationMatrix.at(n) = m;
 }
 
 void Driver::setAccScale(int n, double x, double y, double z){
-  AccCalibrationMatrix->at(n)(0,0) = x;
-  AccCalibrationMatrix->at(n)(1,1) = y;
-  AccCalibrationMatrix->at(n)(2,2) = z;
+  AccCalibrationMatrix.at(n)(0,0) = x;
+  AccCalibrationMatrix.at(n)(1,1) = y;
+  AccCalibrationMatrix.at(n)(2,2) = z;
 }
 
 void Driver::setMagScale(int n, double x, double y, double z){
-  MagCalibrationMatrix->at(n)(0,0) = x;
-  MagCalibrationMatrix->at(n)(1,1) = y;
-  MagCalibrationMatrix->at(n)(2,2) = z;
+  MagCalibrationMatrix.at(n)(0,0) = x;
+  MagCalibrationMatrix.at(n)(1,1) = y;
+  MagCalibrationMatrix.at(n)(2,2) = z;
 }
 
 void Driver::setAccScale(int n, double s){
@@ -183,8 +183,8 @@ void Driver::setMagScale(int n, double s){
 
 /// set accelerometer offset in m/s^2
 void Driver::setAccOffset(int n, double x, double y, double z){
-  AccCalibrationMatrix->at(n)(3,0) = x;
-  AccCalibrationMatrix->at(n)(3,1) = y;
-  AccCalibrationMatrix->at(n)(3,2) = z;
+  AccCalibrationMatrix.at(n)(3,0) = x;
+  AccCalibrationMatrix.at(n)(3,1) = y;
+  AccCalibrationMatrix.at(n)(3,2) = z;
 }
      

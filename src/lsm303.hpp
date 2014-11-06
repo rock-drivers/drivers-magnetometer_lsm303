@@ -37,8 +37,8 @@ namespace magnetometer_lsm303 {
             void parsePacket(uint8_t const *buffer, size_t size);
             int16_t ax, ay, az, mx, my, mz;
             uint8_t dev_no;
-            std::vector<CalibrationMatrix>* AccCalibrationMatrix;
-            std::vector<CalibrationMatrix>* MagCalibrationMatrix;
+            std::vector<CalibrationMatrix> AccCalibrationMatrix;
+            std::vector<CalibrationMatrix> MagCalibrationMatrix;
     };
 }
 #endif
