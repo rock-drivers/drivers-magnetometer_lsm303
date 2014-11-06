@@ -4,14 +4,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <boost/crc.hpp>
-#include <boost/lexical_cast.hpp>
+//#include <boost/lexical_cast.hpp>
 #include <string>
 #include <iostream>
-#include <fstream>
+//#include <fstream>
+#include <Eigen/Geometry>
+//#include <base/Pose.hpp>
 
 #define MAG_RESOLUTION 0.08   /// mgauss/LSB according to LSM303D data sheet 
 #define ACC_RESOLUTION 0.061  /// mg/LSB according to LSM303D data sheet
 #define STANDARD_GRAVITY 9.80665 /// standard gravity according to CGPM CR70
+#define NDEV 5 ///number of magnetometers attached
 
 using namespace magnetometer_lsm303;
 
@@ -24,11 +27,21 @@ Driver::Driver() : iodrivers_base::Driver(10000),
                    mz(0),
                    dev_no(255)
 {
-  //Set scale factor in accelerometer correction matrix to put out m/s^2
-  AccCalibrationMatrix.setIdentity();
-  MagCalibrationMatrix.setIdentity();
-  setAccScale(ACC_RESOLUTION * STANDARD_GRAVITY * 1.0e-3);
-  setMagScale(MAG_RESOLUTION * 1.0e-7);
+  //Set scale factor in accelerometer and magnetometer correction matrices to default values
+    CalibrationMatrix m;
+    m.setIdentity();
+
+    double acc_scale = ACC_RESOLUTION * STANDARD_GRAVITY * 1.0e-3;
+    m(0,0) = acc_scale;
+    m(1,1) = acc_scale;
+    m(2,2) = acc_scale;
+    AccCalibrationMatrix = new std::vector<CalibrationMatrix>(NDEV,m);
+    
+    double mag_scale = MAG_RESOLUTION * 1.0e-7;
+    m(0,0) = mag_scale;
+    m(1,1) = mag_scale;
+    m(2,2) = mag_scale;
+    MagCalibrationMatrix = new std::vector<CalibrationMatrix>(NDEV,m);
 }
 
 void Driver::open(std::string const& uri){
@@ -123,7 +136,7 @@ int16_t Driver::getRawAccZ(void){
 Eigen::Vector3d Driver::getAcc(){
   Eigen::Matrix<double,1,4> x;
   x << ax, ay, az, 1.0;
-  return  (x * AccCalibrationMatrix).transpose();
+  return  (x * AccCalibrationMatrix->at(dev_no)).transpose();
 }
 
 /** Function returns correct magnetometer readings using a 4x3 correction matrix.
@@ -132,7 +145,7 @@ Eigen::Vector3d Driver::getAcc(){
 Eigen::Vector3d Driver::getMag(){
   Eigen::Matrix<double,1,4> x;
   x << mx, my, mz, 1.0;
-  return  (x * MagCalibrationMatrix).transpose();
+  return  (x * MagCalibrationMatrix->at(dev_no)).transpose();
 }
 
 /// Returns the number of the device, which sent the data (useful in case of multiple / chained LSM303 on one microcontroller)
@@ -140,64 +153,38 @@ uint8_t Driver::getDevNo(void){
   return dev_no;
 }
 
-void Driver::setAccCalibrationMatrix(Eigen::Matrix<double,4,3,Eigen::DontAlign> m){
-  AccCalibrationMatrix = m;
+void Driver::setAccCalibrationMatrix(int n,Eigen::Matrix<double,4,3,Eigen::DontAlign> m){
+  AccCalibrationMatrix->at(n) = m;
 }
 
-void Driver::setMagCalibrationMatrix(Eigen::Matrix<double,4,3,Eigen::DontAlign> m){
-  MagCalibrationMatrix = m;
+void Driver::setMagCalibrationMatrix(int n, Eigen::Matrix<double,4,3,Eigen::DontAlign> m){
+  MagCalibrationMatrix->at(n) = m;
 }
 
-void Driver::setAccScale(double x, double y, double z){
-  AccCalibrationMatrix(0,0) = x;
-  AccCalibrationMatrix(1,1) = y;
-  AccCalibrationMatrix(2,2) = z;
+void Driver::setAccScale(int n, double x, double y, double z){
+  AccCalibrationMatrix->at(n)(0,0) = x;
+  AccCalibrationMatrix->at(n)(1,1) = y;
+  AccCalibrationMatrix->at(n)(2,2) = z;
 }
 
-void Driver::setMagScale(double x, double y, double z){
-  MagCalibrationMatrix(0,0) = x;
-  MagCalibrationMatrix(1,1) = y;
-  MagCalibrationMatrix(2,2) = z;
+void Driver::setMagScale(int n, double x, double y, double z){
+  MagCalibrationMatrix->at(n)(0,0) = x;
+  MagCalibrationMatrix->at(n)(1,1) = y;
+  MagCalibrationMatrix->at(n)(2,2) = z;
 }
 
-void Driver::setAccScale(double s){
-  setAccScale(s,s,s);
+void Driver::setAccScale(int n, double s){
+  setAccScale(n,s,s,s);
 }
 
-void Driver::setMagScale(double s){
-  setMagScale(s,s,s);
+void Driver::setMagScale(int n, double s){
+  setMagScale(n,s,s,s);
 }
 
 /// set accelerometer offset in m/s^2
-void Driver::setAccOffset(double x, double y, double z){
-  AccCalibrationMatrix(3,0) = x;
-  AccCalibrationMatrix(3,1) = y;
-  AccCalibrationMatrix(3,2) = z;
+void Driver::setAccOffset(int n, double x, double y, double z){
+  AccCalibrationMatrix->at(n)(3,0) = x;
+  AccCalibrationMatrix->at(n)(3,1) = y;
+  AccCalibrationMatrix->at(n)(3,2) = z;
 }
-
-/** Function to read a correction parameter matrix for the accelerometers of the ST LSM303
-  * from a file. The file must contain 12 values in 4x3 shape as outlined in ST application
-  * note AN3192. */
-void Driver::readAccCalibrationParameters(char* filename){
-  std::vector<std::string> words;
-  std::string str;
-  std::ifstream fin(filename);
-  while (fin >> str){
-    words.push_back(str);
-  }
-  fin.close();
-
-  if(words.size() != 12){
-    //error
-  }
-  else {
-    for (int i = 0; i < 12; ++i){
-      AccCalibrationMatrix(i / 3, i % 3) =  boost::lexical_cast<double>(words[i]);
-    }
-  }
-}
-
-
-    
-    
      
