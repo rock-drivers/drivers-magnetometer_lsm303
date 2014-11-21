@@ -1,6 +1,7 @@
 /** @file */
 
 #include "lsm303.hpp"
+//#include "lsm303.h"
 #include <stdio.h>
 #include <string.h>
 #include <boost/crc.hpp>
@@ -187,4 +188,36 @@ void Driver::setAccOffset(int n, double x, double y, double z){
   AccCalibrationMatrix.at(n)(3,1) = y;
   AccCalibrationMatrix.at(n)(3,2) = z;
 }
-     
+    
+EXPORT_C void* C_Create()
+{
+    return new Driver();
+}
+
+EXPORT_C void  C_Destroy(void* thisC)
+{
+    delete static_cast<Driver*>(thisC);
+}
+
+EXPORT_C void C_open(void* thisC, char* uri){
+    Driver* d = (Driver*) thisC;
+    d->open(uri);
+}
+
+EXPORT_C void C_read(void* thisC){
+    Driver* d; 
+    d = (Driver*) thisC;
+    d->read();
+}
+
+EXPORT_C uint8_t C_getDevNo(void* thisC){
+    Driver* d;
+    d = (Driver*) thisC;
+    return d->getDevNo();
+}
+
+EXPORT_C void C_setReadTimeout(void* thisC, int i){
+    Driver* d;
+    d = (Driver*) thisC;
+    d->setReadTimeout(base::Time::fromSeconds(i));
+}

@@ -9,3 +9,5 @@ rock_executable(lsm303_main main.cpp
 rock_executable(lsm303_output_adc main2.cpp
     DEPS magnetometer_lsm303)
 
+rock_executable(test_c test_c.c
+    DEPS magnetometer_lsm303)
