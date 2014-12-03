@@ -25,13 +25,14 @@ int main(int argc, char** argv){
     Eigen::Vector3d acc, mag;
     acc = d->getAcc();
     mag = d->getMag();
-    printf("Dev %1i: ACC(% 6.2f|% 6.2f|% 6.2f) MAG(% 6.2f|% 6.2f|% 6.2f)",d->getDevNo(),
+    
+    d->getDevNo() == 0 ? printf("\n") : printf("\t");
+    printf("%1i: ACC(% 6.2f|% 6.2f|% 6.2f) MAG(% 6.2f|% 6.2f|% 6.2f)",d->getDevNo(),
         acc[0],
         acc[1],
         acc[2],
         mag[0]*1e4,
         mag[1]*1e4,
         mag[2]*1e4);
-    d->getDevNo() ? printf("\n") : printf("\t");
   }
 }
