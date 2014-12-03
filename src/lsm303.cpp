@@ -1,16 +1,13 @@
 /** @file */
 
 #include "lsm303.hpp"
-//#include "lsm303.h"
 #include <stdio.h>
 #include <string.h>
 #include <boost/crc.hpp>
-//#include <boost/lexical_cast.hpp>
 #include <string>
 #include <iostream>
-//#include <fstream>
 #include <Eigen/Geometry>
-//#include <base/Pose.hpp>
+#include <Eigen/Dense>
 
 #define MAG_RESOLUTION 0.08   /// mgauss/LSB according to LSM303D data sheet 
 #define ACC_RESOLUTION 0.061  /// mg/LSB according to LSM303D data sheet
@@ -154,6 +151,23 @@ uint8_t Driver::getDevNo(void){
   return dev_no;
 }
 
+Eigen::Matrix<double,4,3,Eigen::DontAlign> Driver::computeAccCalibrationMatrix(const Eigen::MatrixX3d &w, const Eigen::MatrixX3d &Y){
+    // preparing Y = w * X, with Y being the expected acc values for known positions (nx3),
+    // w the raw value readings (nx4, homogeneous) and X the 4x3 calibration matrix to be computed
+
+    //TODO check for right shape of w and Y
+
+    std::cout << "w:\n" << w << std::endl;
+    std::cout << "Y:\n" << Y << std::endl;
+
+    std::cout << "homogeneous w:\n" << w.rowwise().homogeneous() << std::endl;
+
+    // least square solving w*X = Y (often Ax=b)
+    Eigen::Matrix<double,4,3,Eigen::DontAlign>X = w.rowwise().homogeneous().colPivHouseholderQr().solve(Y);
+    std::cout << "Solved wX = Y with X:\n" << X << std::endl;
+    return X;
+}
+
 void Driver::setAccCalibrationMatrix(int n,Eigen::Matrix<double,4,3,Eigen::DontAlign> m){
   AccCalibrationMatrix.at(n) = m;
 }
@@ -172,8 +186,7 @@ void Driver::setMagScale(int n, double x, double y, double z){
   MagCalibrationMatrix.at(n)(0,0) = x;
   MagCalibrationMatrix.at(n)(1,1) = y;
   MagCalibrationMatrix.at(n)(2,2) = z;
-}
-
+} 
 void Driver::setAccScale(int n, double s){
   setAccScale(n,s,s,s);
 }

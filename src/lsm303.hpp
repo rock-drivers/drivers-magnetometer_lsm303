@@ -27,6 +27,8 @@ namespace magnetometer_lsm303 {
             Eigen::Vector3d getAcc(void);
             Eigen::Vector3d getMag(void);
 
+            Eigen::Matrix<double,4,3,Eigen::DontAlign> computeAccCalibrationMatrix(const Eigen::MatrixX3d &, const Eigen::MatrixX3d&);
+
             void setAccCalibrationMatrix(int, Eigen::Matrix<double,4,3,Eigen::DontAlign>); 
             void setMagCalibrationMatrix(int,Eigen::Matrix<double,4,3,Eigen::DontAlign>); 
             void setAccScale(int,double);
