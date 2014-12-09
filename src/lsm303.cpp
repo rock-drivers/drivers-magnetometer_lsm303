@@ -15,6 +15,7 @@
 #define NDEV 5 ///number of magnetometers attached
 
 using namespace magnetometer_lsm303;
+using namespace Eigen;
 
 Driver::Driver() : iodrivers_base::Driver(10000),
                    ax(0),
@@ -131,8 +132,8 @@ int16_t Driver::getRawAccZ(void){
 /** Function returns correct accelerometer readings using a 4x3 correction matrix.
   * The matrix incorporates misalignment- , scale and offset-errors as outlined
   * in ST application note AN3192 */
-Eigen::Vector3d Driver::getAcc(){
-  Eigen::Matrix<double,1,4> x;
+Vector3d Driver::getAcc(){
+  Matrix<double,1,4> x;
   x << ax, ay, az, 1.0;
   return  (x * AccCalibrationMatrix.at(dev_no)).transpose();
 }
@@ -140,8 +141,8 @@ Eigen::Vector3d Driver::getAcc(){
 /** Function returns correct magnetometer readings using a 4x3 correction matrix.
   * The matrix incorporates hardiron and softiron errors as outlined
   * in ST application note AN3192 */
-Eigen::Vector3d Driver::getMag(){
-  Eigen::Matrix<double,1,4> x;
+Vector3d Driver::getMag(){
+  Matrix<double,1,4> x;
   x << mx, my, mz, 1.0;
   return  (x * MagCalibrationMatrix.at(dev_no)).transpose();
 }
@@ -151,7 +152,7 @@ uint8_t Driver::getDevNo(void){
   return dev_no;
 }
 
-Eigen::Matrix<double,4,3,Eigen::DontAlign> Driver::computeAccCalibrationMatrix(const Eigen::MatrixX3d &w, const Eigen::MatrixX3d &Y){
+Matrix<double,4,3,DontAlign> Driver::computeAccCalibrationMatrix(const MatrixX3d &w, const MatrixX3d &Y){
     // preparing Y = w * X, with Y being the expected acc values for known positions (nx3),
     // w the raw value readings (nx4, homogeneous) and X the 4x3 calibration matrix to be computed
 
@@ -163,16 +164,16 @@ Eigen::Matrix<double,4,3,Eigen::DontAlign> Driver::computeAccCalibrationMatrix(c
     std::cout << "homogeneous w:\n" << w.rowwise().homogeneous() << std::endl;
 
     // least square solving w*X = Y (often Ax=b)
-    Eigen::Matrix<double,4,3,Eigen::DontAlign>X = w.rowwise().homogeneous().colPivHouseholderQr().solve(Y);
+    Matrix<double,4,3,DontAlign>X = w.rowwise().homogeneous().colPivHouseholderQr().solve(Y);
     std::cout << "Solved wX = Y with X:\n" << X << std::endl;
     return X;
 }
 
-void Driver::setAccCalibrationMatrix(int n,Eigen::Matrix<double,4,3,Eigen::DontAlign> m){
+void Driver::setAccCalibrationMatrix(int n,Matrix<double,4,3,DontAlign> m){
   AccCalibrationMatrix.at(n) = m;
 }
 
-void Driver::setMagCalibrationMatrix(int n, Eigen::Matrix<double,4,3,Eigen::DontAlign> m){
+void Driver::setMagCalibrationMatrix(int n, Matrix<double,4,3,DontAlign> m){
   MagCalibrationMatrix.at(n) = m;
 }
 
@@ -202,6 +203,53 @@ void Driver::setAccOffset(int n, double x, double y, double z){
   AccCalibrationMatrix.at(n)(3,2) = z;
 }
     
+Vector3d magnetometer_lsm303::computeDirectionMean(const std::vector<Vector3d> &directionSamples){
+    Vector3d meanDir;
+    meanDir.setZero();
+
+    for(auto const& v: directionSamples){
+        if(!v.isZero()) meanDir += v.normalized(); // only add if not zero-vector -> no direction
+    }
+    return meanDir.isZero() ? Vector3d::Zero() : meanDir.normalized();
+}
+
+double magnetometer_lsm303::computeDirectionDispersion(const std::vector<Vector3d> &directionSamples, DispersionMetric m){
+    //TODO throw error if zero or only one sample given -> no dispersion (directionSamples.size() < 2)
+    Vector3d resultingVector;
+    resultingVector.setZero();
+
+    int N = 0;
+    for(auto const& v: directionSamples){
+        if(!v.isZero()) {
+            resultingVector += v.normalized(); // only add if not zero-vector -> no direction
+            N++;
+        }
+    }
+
+    switch (m){
+        // calculate precision parameter k of Fisher-Distribution
+        case MISES_FISHER_K:    {
+                                    return (N - 1) / (N - resultingVector.norm()); // TODO Attention to division by zero if all samples have the exact same direction
+                                    break;         
+                                }
+        case MISES_FISHER_S2:   {
+                                    double s2 = 0.0;
+                                    double delta = 0.0;
+                                    N = 0;
+                                    for(auto const& v: directionSamples){
+                                        delta = acos((v.dot(resultingVector)) / (v.norm() * resultingVector.norm())); // compute delta angle axb/|a|*|b| between mean and sample direction
+                                        s2 += delta*delta; // accumulate squared delta angles 
+                                        N++;
+                                    }
+                                    return s2 / (N-1); // unbiased sample variance (i.e. with Bessel's correction)
+                                    break;
+                                }
+        case KENT: return 0; break;
+        case BINGHAM: return 0; break;
+        default: return 0; break;
+    }
+}
+
 EXPORT_C void* C_Create()
 {
     return new Driver();
@@ -234,3 +282,5 @@ EXPORT_C void C_setReadTimeout(void* thisC, int i){
     d = (Driver*) thisC;
     d->setReadTimeout(base::Time::fromSeconds(i));
 }
+
+

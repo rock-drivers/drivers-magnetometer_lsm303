@@ -1,3 +1,5 @@
+list(APPEND CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+
 rock_library(magnetometer_lsm303
     SOURCES lsm303.cpp
     HEADERS lsm303.hpp 
@@ -14,3 +16,4 @@ rock_executable(test_c test_c.c
 
 rock_executable(calibrate calibrate.cpp
     DEPS magnetometer_lsm303)
+

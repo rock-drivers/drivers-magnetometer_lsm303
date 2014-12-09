@@ -10,6 +10,11 @@
 namespace magnetometer_lsm303 {
 
     typedef Eigen::Matrix<double,4,3,Eigen::DontAlign> CalibrationMatrix;
+    enum DispersionMetric {MISES_FISHER_K, MISES_FISHER_S2, KENT, BINGHAM};
+
+    Eigen::Vector3d computeDirectionMean(const std::vector<Eigen::Vector3d> &);
+    //TODO computeDirectionDispersion for different statistics
+    double computeDirectionDispersion(const std::vector<Eigen::Vector3d> &, DispersionMetric = MISES_FISHER_K);
 
     class Driver : public iodrivers_base::Driver{
         public:
@@ -36,6 +41,7 @@ namespace magnetometer_lsm303 {
             void setAccOffset(int,double,double,double);
             void setMagScale(int,double);
             void setMagScale(int,double,double,double);
+
 
         private:
             void parsePacket(uint8_t const *buffer, size_t size);
