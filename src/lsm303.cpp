@@ -50,6 +50,7 @@ void Driver::open(std::string const& uri){
 void Driver::read(){
   uint8_t buffer[1000];
   int packet_size = readPacket(buffer,10000);
+
   parsePacket(buffer, packet_size);
 }
 
@@ -69,7 +70,7 @@ void Driver::parsePacket(uint8_t const* buffer, size_t size){
 /** Trying to extract a packet with valid startbyte, correct length and CRC checksum.
   * CRC is computed using 16bit CCITT. */
 int Driver::extractPacket(uint8_t const* buffer, size_t size) const {
-  //printf("extract Packet called\n");
+  //printf("extract Packet called with %i bytes\n",(int)size);
   uint8_t *start;
 
   //search for start char '*'
@@ -83,18 +84,25 @@ int Driver::extractPacket(uint8_t const* buffer, size_t size) const {
     //printf("Start char found at pos %i, but not at first byte\n",(int) (buffer-start));
     return (int) (buffer-start); //start char, but not at first byte   
   }
-  else if(start == 0 && size < 16){
+  else if(buffer - start == 0 && size < 16){
     //printf("Start char at 0, but not complete yet\n");
     return 0; //start char at [0] but not complete
   }
   else { // we have a full packet
+      //printf("Full packet, size: %i\n", (int)size);
     //check crc
     boost::crc_ccitt_type ccitt;
     ccitt.process_bytes(buffer,14);
+    //printf("boost CCITT computed checksum: %i\n",ccitt.checksum()); 
+    //printf("transmitted checksum: %i", *(uint16_t*)(&buffer[14]));
     if(ccitt.checksum() == *(uint16_t*)(&buffer[14])){ //crc ok
+      //printf("crc ok\n");
       return 16;
     }
-    else return -size;
+    else {
+        //printf("wrong crc, returning %i\n",(int)-size);
+        return -size;
+    }
   }
   return -size;
 }
@@ -232,10 +240,11 @@ double magnetometer_lsm303::computeDirectionDispersion(const std::vector<Vector3
                                     return (N - 1) / (N - resultingVector.norm()); // TODO Attention to division by zero if all samples have the exact same direction
                                     break;         
                                 }
-        case MISES_FISHER_S2:   {
+        case MISES_FISHER_S2:   { //aka variance of delta angles
                                     double s2 = 0.0;
                                     double delta = 0.0;
                                     N = 0;
+                                    //TODO use running sample variance http://www.johndcook.com/blog/standard_deviation/
                                     for(auto const& v: directionSamples){
                                         delta = acos((v.dot(resultingVector)) / (v.norm() * resultingVector.norm())); // compute delta angle axb/|a|*|b| between mean and sample direction
                                         s2 += delta*delta; // accumulate squared delta angles 

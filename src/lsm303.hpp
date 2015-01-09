@@ -43,6 +43,7 @@ namespace magnetometer_lsm303 {
             void setMagScale(int,double,double,double);
 
 
+
         private:
             void parsePacket(uint8_t const *buffer, size_t size);
             int16_t ax, ay, az, mx, my, mz;
