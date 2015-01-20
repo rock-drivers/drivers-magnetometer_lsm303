@@ -21,15 +21,13 @@ int main(int argc, char** argv){
       cout << "Timeout error" << endl;
     }
 
-    if (d->getDevNo() == atoi(argv[1])) {
-        printf("%i\t%i\t%i\t%i\t%i\t%i\t\t",d->getRawAccX(),
-        d->getRawAccY(),
-        d->getRawAccZ(),
-        d->getRawMagX(),
-        d->getRawMagY(),
-        d->getRawMagZ());
-        printf("CAL ACC: %f\t%f\t%f\n",d->getAcc()[0],d->getAcc()[1],d->getAcc()[2]);
-        std::cout << d->getMag() << std::endl;
-    }
+    d->getDevNo() == 0 ? printf("\n") : printf("\t");
+    printf("%i %06i %06i %06i %06i %06i %06i",d->getDevNo(),
+            d->getRawAccX(),
+            d->getRawAccY(),
+            d->getRawAccZ(),
+            d->getRawMagX(),
+            d->getRawMagY(),
+            d->getRawMagZ());
   }
 }
