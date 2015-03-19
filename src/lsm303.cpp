@@ -43,10 +43,12 @@ Driver::Driver() : iodrivers_base::Driver(10000),
     MagCalibrationMatrix.assign(NDEV,m);
 }
 
+/// Open the device using openURI
 void Driver::open(std::string const& uri){
   openURI(uri);
 }
 
+/// Read Packet from device
 void Driver::read(){
   uint8_t buffer[1000];
   int packet_size = readPacket(buffer,10000);
@@ -54,7 +56,7 @@ void Driver::read(){
   parsePacket(buffer, packet_size);
 }
 
-/** Function to parse a complete packet with valid CRC (checked before).
+/** Function to parse a complete LSM303D packet with valid CRC (checked before in extractPacket()).
   * The function reassembles the int16_t values for accelerometer and
   * magnetometer values */
 void Driver::parsePacket(uint8_t const* buffer, size_t size){
@@ -137,7 +139,7 @@ int16_t Driver::getRawAccZ(void){
   return az;
 }
 
-/** Function returns correct accelerometer readings using a 4x3 correction matrix.
+/** Function returns corrected accelerometer readings using a 4x3 correction matrix.
   * The matrix incorporates misalignment- , scale and offset-errors as outlined
   * in ST application note AN3192 */
 Vector3d Driver::getAcc(){
@@ -146,7 +148,7 @@ Vector3d Driver::getAcc(){
   return  (x * AccCalibrationMatrix.at(dev_no)).transpose();
 }
 
-/** Function returns correct magnetometer readings using a 4x3 correction matrix.
+/** Function returns corrected magnetometer readings using a 4x3 correction matrix.
   * The matrix incorporates hardiron and softiron errors as outlined
   * in ST application note AN3192 */
 Vector3d Driver::getMag(){
@@ -160,6 +162,9 @@ uint8_t Driver::getDevNo(void){
   return dev_no;
 }
 
+/** Compute an accelerometer correction matrix X from raw accelerometer samples w 
+ * (nx4 matrix, homogeneous form required). Matrix Y is the matrix of expected calibrated values in the form nx3
+ */
 Matrix<double,4,3,DontAlign> Driver::computeAccCalibrationMatrix(const MatrixX3d &w, const MatrixX3d &Y){
     // preparing Y = w * X, with Y being the expected acc values for known positions (nx3),
     // w the raw value readings (nx4, homogeneous) and X the 4x3 calibration matrix to be computed
@@ -177,40 +182,58 @@ Matrix<double,4,3,DontAlign> Driver::computeAccCalibrationMatrix(const MatrixX3d
     return X;
 }
 
+/// Set the correction matrix for accelerometer n
 void Driver::setAccCalibrationMatrix(int n,Matrix<double,4,3,DontAlign> m){
   AccCalibrationMatrix.at(n) = m;
 }
 
+/// Set the correction matrix for magnetometer n
 void Driver::setMagCalibrationMatrix(int n, Matrix<double,4,3,DontAlign> m){
   MagCalibrationMatrix.at(n) = m;
 }
 
+/** Convenience function to change scale per axis of accelerometer 
+ * correction matrix for device number n
+ */
 void Driver::setAccScale(int n, double x, double y, double z){
   AccCalibrationMatrix.at(n)(0,0) = x;
   AccCalibrationMatrix.at(n)(1,1) = y;
   AccCalibrationMatrix.at(n)(2,2) = z;
 }
 
+/** Convenience function to change scale per axis of magnetometer 
+ * correction matrix for device number n
+ */
 void Driver::setMagScale(int n, double x, double y, double z){
   MagCalibrationMatrix.at(n)(0,0) = x;
   MagCalibrationMatrix.at(n)(1,1) = y;
   MagCalibrationMatrix.at(n)(2,2) = z;
 } 
+
+/** Convenience function to change scale of accelerometer 
+ * correction matrix for device number n
+ */
 void Driver::setAccScale(int n, double s){
   setAccScale(n,s,s,s);
 }
-
+  
+/** Convenience function to change scale of magnetometer 
+ * correction matrix for device number n
+ */
 void Driver::setMagScale(int n, double s){
   setMagScale(n,s,s,s);
 }
 
-/// set accelerometer offset in m/s^2
+/** Set accelerometer correction matrix offset per axis
+ * in m/s^2 for device  number n
+ */
 void Driver::setAccOffset(int n, double x, double y, double z){
   AccCalibrationMatrix.at(n)(3,0) = x;
   AccCalibrationMatrix.at(n)(3,1) = y;
   AccCalibrationMatrix.at(n)(3,2) = z;
 }
-    
+
+/** Compute direction mean of all attached magnetometer devices */    
 Vector3d magnetometer_lsm303::computeDirectionMean(const std::vector<Vector3d> &directionSamples){
     Vector3d meanDir;
     meanDir.setZero();
@@ -221,6 +244,8 @@ Vector3d magnetometer_lsm303::computeDirectionMean(const std::vector<Vector3d> &
     return meanDir.isZero() ? Vector3d::Zero() : meanDir.normalized();
 }
 
+/** Compute direction dispersion of a multi device magnetometer 
+ * sample using a DispersionMetric m */
 double magnetometer_lsm303::computeDirectionDispersion(const std::vector<Vector3d> &directionSamples, DispersionMetric m){
     //TODO throw error if zero or only one sample given -> no dispersion (directionSamples.size() < 2)
     Vector3d resultingVector;
@@ -259,6 +284,8 @@ double magnetometer_lsm303::computeDirectionDispersion(const std::vector<Vector3
     }
 }
 
+
+// c facade
 EXPORT_C void* C_Create()
 {
     return new Driver();

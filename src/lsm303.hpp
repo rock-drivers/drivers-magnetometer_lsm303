@@ -63,6 +63,7 @@ typedef struct Driver Driver;
 #define EXPORT_C 
 #endif
 
+//c facade
 EXPORT_C void* C_Create(void);
 EXPORT_C void C_Destroy(void*);
 EXPORT_C void C_open(void*,char*);
