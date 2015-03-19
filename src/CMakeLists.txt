@@ -8,10 +8,7 @@ rock_library(magnetometer_lsm303
 rock_executable(lsm303_main main.cpp
     DEPS magnetometer_lsm303)
 
-rock_executable(lsm303_output_adc main2.cpp
-    DEPS magnetometer_lsm303)
-
-rock_executable(test_c test_c.c
+rock_executable(lsm303_output_raw main_raw.cpp
     DEPS magnetometer_lsm303)
 
 rock_executable(calibrate calibrate.cpp

@@ -1,5 +1,5 @@
 <package>
-  <description brief="Driver for the LSM303 combined magnetometer-accelerometer sensor">
+  <description brief="Driver for the ST LSM303 combined magnetometer-accelerometer sensor">
   
   </description>
   <author>Leif Christensen/leif.christensen@gmx.de</author>
