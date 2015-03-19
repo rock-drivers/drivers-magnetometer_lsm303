@@ -2,8 +2,6 @@
 #define _LSM303_HPP_
 
 #include <inttypes.h>
-
-#ifdef __cplusplus
 #include <iodrivers_base/Driver.hpp>
 #include <Eigen/Dense>
 
@@ -52,23 +50,4 @@ namespace magnetometer_lsm303 {
             std::vector<CalibrationMatrix> MagCalibrationMatrix;
     };
 }
-
-#else
-typedef struct Driver Driver;
-#endif
-
-#ifdef __cplusplus
-#define EXPORT_C extern "C"
-#else
-#define EXPORT_C 
-#endif
-
-//c facade
-EXPORT_C void* C_Create(void);
-EXPORT_C void C_Destroy(void*);
-EXPORT_C void C_open(void*,char*);
-EXPORT_C void C_read(void*);
-EXPORT_C uint8_t C_getDevNo(void*);
-EXPORT_C void C_setReadTimeout(void*,int);
-
 #endif

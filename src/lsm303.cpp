@@ -1,5 +1,3 @@
-/** @file */
-
 #include "lsm303.hpp"
 #include <stdio.h>
 #include <string.h>
@@ -283,40 +281,4 @@ double magnetometer_lsm303::computeDirectionDispersion(const std::vector<Vector3
         default: return 0; break;
     }
 }
-
-
-// c facade
-EXPORT_C void* C_Create()
-{
-    return new Driver();
-}
-
-EXPORT_C void  C_Destroy(void* thisC)
-{
-    delete static_cast<Driver*>(thisC);
-}
-
-EXPORT_C void C_open(void* thisC, char* uri){
-    Driver* d = (Driver*) thisC;
-    d->open(uri);
-}
-
-EXPORT_C void C_read(void* thisC){
-    Driver* d; 
-    d = (Driver*) thisC;
-    d->read();
-}
-
-EXPORT_C uint8_t C_getDevNo(void* thisC){
-    Driver* d;
-    d = (Driver*) thisC;
-    return d->getDevNo();
-}
-
-EXPORT_C void C_setReadTimeout(void* thisC, int i){
-    Driver* d;
-    d = (Driver*) thisC;
-    d->setReadTimeout(base::Time::fromSeconds(i));
-}
-
 
