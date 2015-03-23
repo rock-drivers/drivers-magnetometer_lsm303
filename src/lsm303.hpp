@@ -39,8 +39,7 @@ namespace magnetometer_lsm303 {
             void setAccOffset(int,double,double,double);
             void setMagScale(int,double);
             void setMagScale(int,double,double,double);
-
-
+            double computeHeading(void);
 
         private:
             void parsePacket(uint8_t const *buffer, size_t size);
