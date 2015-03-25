@@ -109,3 +109,37 @@ BOOST_AUTO_TEST_CASE(directionDispersion_MISES_FISHER_S2){
     BOOST_TEST_MESSAGE(s2);
     BOOST_CHECK_CLOSE(s2,res,1e-4);
 }
+
+
+BOOST_AUTO_TEST_CASE(simpleVectorMean_sameDir){
+    Eigen::Vector3d a, b, c, nom, act; 
+
+    a << 1.1 , 0.0, 0.0;
+    b << 1.0 , 0.0, 0.0;
+    c << 0.9 , 0.0, 0.0;
+    nom << 1.0 , 0.0, 0.0;
+
+    std::vector<Eigen::Vector3d> v; 
+    v.push_back(a);
+    v.push_back(b);
+    v.push_back(c);
+
+    act = computeVectorMean(v);
+    BOOST_TEST_MESSAGE(act);
+    BOOST_CHECK(act.isApprox(nom,1e-8));
+}
+
+BOOST_AUTO_TEST_CASE(simpleVectorMean_oppositeDir){
+    Eigen::Vector3d a, b, act; 
+
+    a << 2.0 , 2.0, 2.0;
+    b << -2.0 , -2.0, -2.0;
+
+    std::vector<Eigen::Vector3d> v; 
+    v.push_back(a);
+    v.push_back(b);
+
+    act = computeVectorMean(v);
+    BOOST_TEST_MESSAGE(act);
+    BOOST_CHECK(act.isZero(1e-8));
+}

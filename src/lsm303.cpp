@@ -242,6 +242,17 @@ Vector3d magnetometer_lsm303::computeDirectionMean(const std::vector<Vector3d> &
     return meanDir.isZero() ? Vector3d::Zero() : meanDir.normalized();
 }
 
+/** Compute mean vector */
+Vector3d magnetometer_lsm303::computeVectorMean(const std::vector<Vector3d> &samples){
+    Vector3d meanVec;
+    meanVec.setZero();
+
+    for(auto const& v: samples){
+        meanVec += v;
+    }
+    return meanVec / samples.size();
+}
+
 /** Compute direction dispersion of a multi device magnetometer 
  * sample using a DispersionMetric m */
 double magnetometer_lsm303::computeDirectionDispersion(const std::vector<Vector3d> &directionSamples, DispersionMetric m){

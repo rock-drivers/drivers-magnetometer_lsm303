@@ -11,6 +11,7 @@ namespace magnetometer_lsm303 {
     enum DispersionMetric {MISES_FISHER_K, MISES_FISHER_S2, KENT, BINGHAM};
 
     Eigen::Vector3d computeDirectionMean(const std::vector<Eigen::Vector3d> &);
+    Eigen::Vector3d computeVectorMean(const std::vector<Eigen::Vector3d> &);
     //TODO computeDirectionDispersion for different statistics
     double computeDirectionDispersion(const std::vector<Eigen::Vector3d> &, DispersionMetric = MISES_FISHER_K);
 
