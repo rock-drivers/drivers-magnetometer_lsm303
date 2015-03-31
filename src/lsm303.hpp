@@ -14,6 +14,7 @@ namespace magnetometer_lsm303 {
     Eigen::Vector3d computeVectorMean(const std::vector<Eigen::Vector3d> &);
     //TODO computeDirectionDispersion for different statistics
     double computeDirectionDispersion(const std::vector<Eigen::Vector3d> &, DispersionMetric = MISES_FISHER_K);
+    double computeHeading(const Eigen::Vector3d &, const Eigen::Vector3d &);
 
     class Driver : public iodrivers_base::Driver{
         public:
@@ -40,7 +41,6 @@ namespace magnetometer_lsm303 {
             void setAccOffset(int,double,double,double);
             void setMagScale(int,double);
             void setMagScale(int,double,double,double);
-            double computeHeading(void);
 
         private:
             void parsePacket(uint8_t const *buffer, size_t size);

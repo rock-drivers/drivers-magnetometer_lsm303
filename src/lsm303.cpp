@@ -293,16 +293,17 @@ double magnetometer_lsm303::computeDirectionDispersion(const std::vector<Vector3
     }
 }
 
-double Driver::computeHeading(){
-    Eigen::Vector3d acc = Driver::getAcc();
-    Eigen::Vector3d mag = Driver::getMag();
+double magnetometer_lsm303::computeHeading(const Eigen::Vector3d &acc, const Eigen::Vector3d &mag){
 
     // Get quaternion, that removes pitch and roll from body
-    Eigen::Quaternion<double> q = Eigen::Quaternion<double>::FromTwoVectors(acc,Eigen::Vector3d::UnitZ());
+    Eigen::Quaternion<double> acc2hor = Eigen::Quaternion<double>::FromTwoVectors(acc,Eigen::Vector3d::UnitZ());
 
     //rotate mag into horizontal plane
-    Eigen::Vector3d mag_h = q * mag;
-    return atan2(mag_h.y(),mag_h.x());
+    Eigen::Vector3d mag_h = acc2hor * mag;
+    double heading = -atan2(mag_h.y(),mag_h.x()); 
+                                                                                                                                 
+    // return magnetic north
+    return heading;
 }
 
     

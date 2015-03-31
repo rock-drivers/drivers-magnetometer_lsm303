@@ -2,6 +2,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 #include <magnetometer_lsm303/lsm303.hpp>
+#include <boost/math/constants/constants.hpp>
 
 using namespace magnetometer_lsm303;
 
@@ -142,4 +143,36 @@ BOOST_AUTO_TEST_CASE(simpleVectorMean_oppositeDir){
     act = computeVectorMean(v);
     BOOST_TEST_MESSAGE(act);
     BOOST_CHECK(act.isZero(1e-8));
+}
+
+BOOST_AUTO_TEST_CASE(heading_level_allx){
+    Eigen::Vector3d acc, mag; 
+    double act, nom;
+    acc << 0.0,0.0,9.81; // body level with world xy plane 
+    mag << 1.0,0.0,0.67; // mag x pointing to magnetic north 
+    nom = 0.0;
+    act = computeHeading(acc,mag);
+    BOOST_CHECK_CLOSE(nom,act,1e-2);
+}
+
+BOOST_AUTO_TEST_CASE(heading_level_ally){
+    Eigen::Vector3d acc, mag; 
+    double act, nom;
+    acc << 0.0,0.0,9.81; // body level with world xy plane 
+    mag << 0.0,1.0,0.67; // mag x pointing to magnetic north 
+    nom = - boost::math::constants::pi<double>() / 2;
+    act = computeHeading(acc,mag);
+    BOOST_TEST_MESSAGE(act);
+    BOOST_CHECK_CLOSE(nom,act,1e-2);
+}
+
+BOOST_AUTO_TEST_CASE(heading_level_xy){
+    Eigen::Vector3d acc, mag; 
+    double act, nom;
+    acc << 0.0,0.0,9.81; // body level with world xy plane 
+    mag << 1.0,1.0,0.67; // mag x pointing to magnetic north 
+    nom = - boost::math::constants::pi<double>() / 4;
+    act = computeHeading(acc,mag);
+    BOOST_TEST_MESSAGE(act);
+    BOOST_CHECK_CLOSE(nom,act,1e-2);
 }
